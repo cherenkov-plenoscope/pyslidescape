@@ -167,8 +167,14 @@ def compile(work_dir, out_path, author=None, num_threads=1):
     os.makedirs(cache_dir, exist_ok=True)
     pool = multiprocessing.Pool(num_threads)
 
-    continuous_slides = query_group_and_slide_structure(work_dir)
+    # roll out svgs with layers
+    # -------------------------
+    layers_jobs = inkscape_svg_roll_out_layers_make_jobs(work_dir=work_dir)
+    _ = pool.map(inkscape_svg_roll_out_layers, layers_jobs)
 
+    # render slides
+    # -------------
+    continuous_slides = query_group_and_slide_structure(work_dir)
     jobs = compile_make_jobs(
         work_dir=work_dir, continuous_slides=continuous_slides
     )
@@ -256,6 +262,46 @@ def query_group_and_slide_structure(work_dir):
             stru.append(item)
 
     return stru
+
+
+def list_layers_svg_in_group_dir(group_dir):
+    pp = glob(path=group_dir, pattern="*.layers.svg")
+    pp = sorted(pp)
+    out = []
+    for p in pp:
+        basename = os.path.basename(p)
+        slide_id_str = str.partition(basename, ".")[0]
+        if is_number(slide_id_str):
+            out.append({"basename": basename, "slide_id": int(slide_id_str)})
+    return out
+
+
+def list_layers_svg_in_work_dir(work_dir):
+    group_dirs = list_slides_dirs(work_dir)
+    out = []
+    for group_dir in group_dirs:
+        basename = os.path.basename(group_dir)
+        group_id_str = str.partition(basename, ".")[0]
+        group_id = int(group_id_str)
+        items = list_layers_svg_in_group_dir(group_dir)
+        for item in items:
+            item["group_id"] = group_id
+            out.append(item)
+    return out
+
+
+def inkscape_svg_roll_out_layers_make_jobs(work_dir):
+    layer_svgs = list_layers_svg_in_work_dir(work_dir=work_dir)
+    jobs = []
+    for layer_svg in layer_svgs:
+        jobs.append(
+            os.path.join(
+                work_dir,
+                "{:04d}.slides".format(layer_svg["group_id"]),
+                "{:04d}.layers.svg".format(layer_svg["slide_id"]),
+            )
+        )
+    return jobs
 
 
 def list_files_which_could_be_rendered(work_dir):
