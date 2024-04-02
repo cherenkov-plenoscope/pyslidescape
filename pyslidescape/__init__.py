@@ -162,10 +162,21 @@ def get_cache_dir(work_dir):
     return os.path.join(work_dir, ".cache")
 
 
+def clean_work_dir(work_dir):
+    group_dirs = list_slides_dirs(work_dir)
+    for group_dir in group_dirs:
+        layer_slide_paths = glob(path=group_dir, pattern=".*-*.svg")
+        for layer_slide_path in layer_slide_paths:
+            print("rm", layer_slide_path)
+            os.remove(layer_slide_path)
+
+
 def compile(work_dir, out_path, author=None, num_threads=1):
     cache_dir = get_cache_dir(work_dir)
     os.makedirs(cache_dir, exist_ok=True)
     pool = multiprocessing.Pool(num_threads)
+
+    clean_work_dir(work_dir=work_dir)
 
     # roll out svgs with layers
     # -------------------------
