@@ -171,7 +171,7 @@ def clean_work_dir(work_dir):
             os.remove(layer_slide_path)
 
 
-def compile(work_dir, out_path, author=None, num_threads=1):
+def compile(work_dir, out_path, num_threads=1):
     cache_dir = get_cache_dir(work_dir)
     os.makedirs(cache_dir, exist_ok=True)
     pool = multiprocessing.Pool(num_threads)

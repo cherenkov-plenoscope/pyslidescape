@@ -31,15 +31,6 @@ def main():
         help=("Path of the output PDF."),
     )
     compile_cmd.add_argument(
-        "-a",
-        "--author",
-        metavar="AUTHOR",
-        type=str,
-        help=("The name of the author of the package."),
-        required=False,
-        default="AUTHOR",
-    )
-    compile_cmd.add_argument(
         "-i",
         "--num_threads",
         metavar="NUM",
@@ -67,7 +58,6 @@ def main():
         pyslidescape.compile(
             work_dir=args.work_dir,
             out_path=args.out_path,
-            author=args.author,
             num_threads=args.num_threads,
         )
     elif args.command == "slide":
