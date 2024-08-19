@@ -65,7 +65,7 @@ def find_inkscape_labels_for_layers_in_inkscape_svg(path):
     for g in svg.getElementsByTagName("g"):
         if "inkscape:label" in g.attributes:
             if "id" in g.attributes:
-                if "layer" in g.attributes["id"].value:
+                if "layer" == g.attributes["id"].value:
                     inkscape_labels.append(
                         g.attributes["inkscape:label"].value
                     )
