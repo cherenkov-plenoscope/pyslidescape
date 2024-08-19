@@ -136,7 +136,7 @@ def make(work_dir, pool=None, verbose=True):
                 need_to_roll_out = True
             else:
                 dst_mtime = utils.mtime(dst_path)
-                if src_mtime < dst_mtime:
+                if src_mtime > dst_mtime:
                     reason = "needs update"
                     need_to_roll_out = True
 
@@ -193,7 +193,7 @@ def make(work_dir, pool=None, verbose=True):
             else:
                 src_mtime = utils.mtime(src_path)
                 dst_mtime = utils.mtime(dst_path)
-                if src_mtime < dst_mtime:
+                if src_mtime > dst_mtime:
                     reason = "needs update"
                     need_to_render = True
 
