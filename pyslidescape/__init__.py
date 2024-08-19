@@ -1,17 +1,12 @@
 from .version import __version__
+from . import inkscape
 
 import os
-import warnings
 import shutil
 from importlib import resources as importlib_resources
-import collections
-import subprocess
 import multiprocessing
-import tempfile
 import img2pdf
 import pathlib
-
-from xml.dom import minidom
 
 
 def glob(path, pattern):
@@ -22,92 +17,6 @@ def glob(path, pattern):
     for p in pathlib.Path(path).glob(pattern):
         out.append(str(p))
     return out
-
-
-def inkscape_svg_export_layers(src, dst, hide, show):
-    """
-    Export selected layers of SVG in the file `src` to the file `dst`.
-
-    :arg  str    src:  path of the source SVG file.
-    :arg  str   dst:  path to export SVG file.
-    :arg  list  hide:  layers to hide. each element is a string.
-    :arg  list  show:  layers to show. each element is a string.
-
-    """
-    with open(src, "rt") as f:
-        svg = minidom.parse(f)
-
-    g_hide = []
-    g_show = []
-    for g in svg.getElementsByTagName("g"):
-        if "inkscape:label" in g.attributes:
-            label = g.attributes["inkscape:label"].value
-            if label in hide:
-                g.attributes["style"] = "display:none"
-                g_hide.append(g)
-            elif label in show:
-                g.attributes["style"] = "display:inline"
-                g_show.append(g)
-
-    with open(dst, "wt") as f:
-        f.write(svg.toxml())
-
-    if False:
-        print(
-            "Hide {0} node(s);  Show {1} node(s).".format(
-                len(g_hide), len(g_show)
-            )
-        )
-
-
-def find_inkscape_labels_for_layers_in_inkscape_svg(path):
-    inkscape_labels = []
-    with open(path, "rt") as f:
-        svg = minidom.parse(f)
-
-    for g in svg.getElementsByTagName("g"):
-        if "inkscape:label" in g.attributes:
-            if "id" in g.attributes:
-                if "layer" == g.attributes["id"].value:
-                    inkscape_labels.append(
-                        g.attributes["inkscape:label"].value
-                    )
-    return inkscape_labels
-
-
-def inkscape_svg_roll_out_layers(
-    layers_svg_path,
-    layers_txt_path=None,
-):
-    path_wo_ext, ext = os.path.splitext(layers_svg_path)
-    if layers_txt_path is None:
-        layers_txt_path = path_wo_ext + ".txt"
-
-    dirname = os.path.dirname(layers_svg_path)
-    basename = os.path.basename(layers_svg_path)
-    slide_id_str = str.partition(basename, ".")[0]
-
-    all_labels = set(
-        find_inkscape_labels_for_layers_in_inkscape_svg(path=layers_svg_path)
-    )
-
-    show_label_sets = []
-    with open(layers_txt_path, "rt") as f:
-        lines = f.read()
-        for line in str.splitlines(lines):
-            show_label_sets.append(set(str.split(line, ",")))
-
-    for i in range(len(show_label_sets)):
-        show_label_set = show_label_sets[i]
-        hide_label_set = all_labels.difference(show_label_set)
-        inkscape_svg_export_layers(
-            src=layers_svg_path,
-            dst=os.path.join(
-                dirname, ".{:s}-{:04d}.svg".format(slide_id_str, i)
-            ),
-            show=show_label_set,
-            hide=hide_label_set,
-        )
 
 
 def images_to_pdf(work_dir, out_path, continuous_slides):
@@ -124,37 +33,6 @@ def images_to_pdf(work_dir, out_path, continuous_slides):
     with open(tmp_path, "wb") as f:
         f.write(img2pdf.convert(list_of_image_paths))
     os.rename(tmp_path, out_path)
-
-
-def inkscape_render(svg_path, out_path, background_opacity=0.0):
-    with tempfile.TemporaryDirectory() as tmp:
-        tmp_image_png = os.path.join(tmp, "image.png")
-        rc_ink = subprocess.call(
-            [
-                "inkscape",
-                "--export-background-opacity={:f}".format(background_opacity),
-                "--export-type={:s}".format("png"),
-                "--export-filename={:s}".format(tmp_image_png),
-                svg_path,
-            ]
-        )
-        ext = os.path.splitext(out_path)
-        if ext == ".png":
-            os.rename(tmp_image_png, out_path)
-        else:
-            rc_con = subprocess.call(
-                [
-                    "convert",
-                    tmp_image_png,
-                    "-quality",
-                    "98",
-                    "-background",
-                    "white",
-                    "-alpha",
-                    "remove",
-                    out_path,
-                ]
-            )
 
 
 def list_image_file_extensions():
@@ -184,7 +62,7 @@ def compile(work_dir, out_path, num_threads=1):
     # roll out svgs with layers
     # -------------------------
     layers_jobs = inkscape_svg_roll_out_layers_make_jobs(work_dir=work_dir)
-    _ = pool.map(inkscape_svg_roll_out_layers, layers_jobs)
+    _ = pool.map(inkscape.inkscape_svg_roll_out_layers, layers_jobs)
 
     # render slides
     # -------------
@@ -200,6 +78,20 @@ def compile(work_dir, out_path, num_threads=1):
         out_path=out_path,
         continuous_slides=continuous_slides,
     )
+
+
+def inkscape_svg_roll_out_layers_make_jobs(work_dir):
+    layer_svgs = list_layers_svg_in_work_dir(work_dir=work_dir)
+    jobs = []
+    for layer_svg in layer_svgs:
+        jobs.append(
+            os.path.join(
+                work_dir,
+                "{:04d}.slides".format(layer_svg["group_id"]),
+                "{:04d}.layers.svg".format(layer_svg["slide_id"]),
+            )
+        )
+    return jobs
 
 
 def compile_make_jobs(work_dir, continuous_slides):
@@ -235,7 +127,7 @@ def compile_make_jobs(work_dir, continuous_slides):
 
 
 def compile_run_job(job):
-    rc = inkscape_render(
+    rc = inkscape.inkscape_render(
         svg_path=job["source_path"],
         out_path=job["render_path"],
         background_opacity=job["background_opacity"],
@@ -302,20 +194,6 @@ def list_layers_svg_in_work_dir(work_dir):
             item["group_id"] = group_id
             out.append(item)
     return out
-
-
-def inkscape_svg_roll_out_layers_make_jobs(work_dir):
-    layer_svgs = list_layers_svg_in_work_dir(work_dir=work_dir)
-    jobs = []
-    for layer_svg in layer_svgs:
-        jobs.append(
-            os.path.join(
-                work_dir,
-                "{:04d}.slides".format(layer_svg["group_id"]),
-                "{:04d}.layers.svg".format(layer_svg["slide_id"]),
-            )
-        )
-    return jobs
 
 
 def list_files_which_could_be_rendered(work_dir):
@@ -414,3 +292,47 @@ def write_template_slide(out_path):
 
 def get_resources_dir():
     return os.path.join(importlib_resources.files("pyslidescape"), "resources")
+
+
+def init(work_dir):
+    os.makedirs(work_dir, exist_ok=True)
+    os.makedirs(os.path.join(work_dir, "resources"), exist_ok=True)
+
+    _fname = "max_planck_institute_for_nuclearphysics.svg"
+    shutil.copy(
+        os.path.join(get_resources_dir(), _fname),
+        os.path.join(work_dir, "resources", _fname)
+    )
+
+    init_slide_dir(path=os.path.join(work_dir, "first.slide"))
+    _fname = "work_in_progress_placeholder.svg"
+    shutil.copy(
+        os.path.join(get_resources_dir(), _fname),
+        os.path.join(work_dir, "first.slide", "resources", _fname)
+    )
+
+    init_slide_dir(path=os.path.join(work_dir, "second.slide"))
+    _fname = "work_in_progress_placeholder.svg"
+    shutil.copy(
+        os.path.join(get_resources_dir(), _fname),
+        os.path.join(work_dir, "first.slide", "resources", _fname)
+    )
+
+    slide_order_filename = "slides.txt"
+    with open(os.path.join(work_dir, slide_order_filename), "wt") as f:
+        f.write("first.slide\n")
+        f.write("second.slide\n")
+
+
+def init_slide_dir(path):
+    os.makedirs(path, exist_ok=True)
+    os.makedirs(os.path.join(path, "resources"), exist_ok=True)
+    slide_path = os.path.join(path, "layers.svg")
+
+    with open(slide_path, "wt") as f:
+        f.write(inkscape.init_slide_svg(1920, 1080))
+
+    layer_order_path = os.path.join(path, "layers.txt")
+    with open(layer_order_path, "wt") as f:
+        f.write("one\n")
+        f.write("two\n")
