@@ -9,7 +9,6 @@ import warnings
 import multiprocessing
 
 
-
 def init(work_dir):
     os.makedirs(work_dir, exist_ok=True)
     os.makedirs(os.path.join(work_dir, "resources"), exist_ok=True)
@@ -17,7 +16,7 @@ def init(work_dir):
     _fname = "max_planck_institute_for_nuclearphysics.svg"
     shutil.copy(
         os.path.join(utils.get_resources_dir(), _fname),
-        os.path.join(work_dir, "resources", _fname)
+        os.path.join(work_dir, "resources", _fname),
     )
 
     slides_dir = os.path.join(work_dir, "slides")
@@ -27,14 +26,14 @@ def init(work_dir):
     _fname = "work_in_progress_placeholder.svg"
     shutil.copy(
         os.path.join(utils.get_resources_dir(), _fname),
-        os.path.join(slides_dir, "first", "resources", _fname)
+        os.path.join(slides_dir, "first", "resources", _fname),
     )
 
     init_slide_dir(path=os.path.join(slides_dir, "second"))
     _fname = "work_in_progress_placeholder.svg"
     shutil.copy(
         os.path.join(utils.get_resources_dir(), _fname),
-        os.path.join(slides_dir, "second", "resources", _fname)
+        os.path.join(slides_dir, "second", "resources", _fname),
     )
 
     slides_txt_path = os.path.join(work_dir, "slides.txt")
@@ -67,9 +66,7 @@ def status_of_what_needs_to_be_done(work_dir):
         sls = {}
         sls["slide"] = slide
         layers_txt_path = os.path.join(slide_dir, "layers.txt")
-        lines = utils.read_lines_from_textfile(
-            path=layers_txt_path
-        )
+        lines = utils.read_lines_from_textfile(path=layers_txt_path)
         show_layer_sets = [str.split(line, ",") for line in lines]
         sls["show_layer_sets"] = show_layer_sets
         sts["slides"].append(sls)
@@ -128,7 +125,9 @@ def make(work_dir, pool=None, verbose=True):
         for show_layer_set in show_layer_sets:
             show_label_str = str.join(",", list(show_layer_set))
 
-            dst_path = os.path.join(build_dir, "slides", slide, show_label_str + ".svg")
+            dst_path = os.path.join(
+                build_dir, "slides", slide, show_label_str + ".svg"
+            )
 
             need_to_roll_out = False
             if not os.path.exists(dst_path):
@@ -142,7 +141,9 @@ def make(work_dir, pool=None, verbose=True):
 
             if need_to_roll_out:
                 if slide not in slides_all_layers:
-                    slides_all_layers[slide] = inkscape.find_inkscape_labels_for_layers_in_inkscape_svg(
+                    slides_all_layers[
+                        slide
+                    ] = inkscape.find_inkscape_labels_for_layers_in_inkscape_svg(
                         path=src_path
                     )
 
@@ -165,8 +166,9 @@ def make(work_dir, pool=None, verbose=True):
         if resource_updates["resources"]:
             slide_rendering_need_update[slide] = True
         else:
-            slide_rendering_need_update[slide] = resource_updates["slides"][slide]
-
+            slide_rendering_need_update[slide] = resource_updates["slides"][
+                slide
+            ]
 
     render_jobs = []
     list_of_image_paths = []
@@ -177,8 +179,12 @@ def make(work_dir, pool=None, verbose=True):
         for show_layer_set in show_layer_sets:
             show_label_str = str.join(",", list(show_layer_set))
 
-            src_path = os.path.join(build_dir, "slides", slide, show_label_str + ".svg")
-            dst_path = os.path.join(build_dir, "slides", slide, show_label_str + ".jpg")
+            src_path = os.path.join(
+                build_dir, "slides", slide, show_label_str + ".svg"
+            )
+            dst_path = os.path.join(
+                build_dir, "slides", slide, show_label_str + ".jpg"
+            )
 
             list_of_image_paths.append(dst_path)
 
@@ -226,8 +232,7 @@ def make(work_dir, pool=None, verbose=True):
     if need_to_render_pdf:
         print(f"compile pdf because {reason:s}.")
         portable_document_format.images_to_pdf(
-            list_of_image_paths=list_of_image_paths,
-            out_path=pdf_path
+            list_of_image_paths=list_of_image_paths, out_path=pdf_path
         )
 
     return True
@@ -237,7 +242,9 @@ def run_svg_roll_out_job(job):
     roll_out_slide_layers(**job)
 
 
-def roll_out_slide_layers(src_svg_path, show_layer_set, all_layer_set, dst_svg_path):
+def roll_out_slide_layers(
+    src_svg_path, show_layer_set, all_layer_set, dst_svg_path
+):
     show_layer_set = set(show_layer_set)
     all_layer_set = set(all_layer_set)
 
@@ -255,5 +262,5 @@ def run_png_render_job(job):
     inkscape.inkscape_render(
         svg_path=job["src_svg_path"],
         out_path=job["dst_jpg_path"],
-        background_opacity=job["background_opacity"]
+        background_opacity=job["background_opacity"],
     )
