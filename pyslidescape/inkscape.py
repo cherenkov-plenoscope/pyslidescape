@@ -55,41 +55,6 @@ def find_inkscape_labels_for_layers_in_inkscape_svg(path):
     return inkscape_labels
 
 
-def inkscape_svg_roll_out_layers(
-    layers_svg_path,
-    layers_txt_path=None,
-):
-    path_wo_ext, ext = os.path.splitext(layers_svg_path)
-    if layers_txt_path is None:
-        layers_txt_path = path_wo_ext + ".txt"
-
-    dirname = os.path.dirname(layers_svg_path)
-    basename = os.path.basename(layers_svg_path)
-    slide_id_str = str.partition(basename, ".")[0]
-
-    all_labels = set(
-        find_inkscape_labels_for_layers_in_inkscape_svg(path=layers_svg_path)
-    )
-
-    show_label_sets = []
-    with open(layers_txt_path, "rt") as f:
-        lines = f.read()
-        for line in str.splitlines(lines):
-            show_label_sets.append(set(str.split(line, ",")))
-
-    for i in range(len(show_label_sets)):
-        show_label_set = show_label_sets[i]
-        hide_label_set = all_labels.difference(show_label_set)
-        inkscape_svg_export_layers(
-            src=layers_svg_path,
-            dst=os.path.join(
-                dirname, ".{:s}-{:04d}.svg".format(slide_id_str, i)
-            ),
-            show=show_label_set,
-            hide=hide_label_set,
-        )
-
-
 def inkscape_render(svg_path, out_path, background_opacity=0.0):
     with tempfile.TemporaryDirectory() as tmp:
         tmp_image_png = os.path.join(tmp, "image.png")
