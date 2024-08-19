@@ -22,7 +22,7 @@ setuptools.setup(
     author_email="AUTHOR@mail",
     packages=["pyslidescape", "pyslidescape.apps"],
     package_data={"pyslidescape": [os.path.join("resources", "*")]},
-    install_requires=["img2pdf"],
+    install_requires=["img2pdf>=0.5.1"],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
