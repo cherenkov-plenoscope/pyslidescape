@@ -1,9 +1,8 @@
 import pyslidescape
 import argparse
 import os
-import shutil
-from importlib import resources as importlib_resources
 import sys
+import multiprocessing
 
 
 def main():
@@ -55,10 +54,10 @@ def main():
     args = parser.parse_args()
 
     if args.command == "compile":
-        pyslidescape.compile(
+        pyslidescape.make(
             work_dir=args.work_dir,
             out_path=args.out_path,
-            num_threads=args.num_threads,
+            pool=multiprocessing.Pool(args.num_threads),
         )
     elif args.command == "slide":
         pyslidescape.write_template_slide(

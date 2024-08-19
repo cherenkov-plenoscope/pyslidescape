@@ -73,7 +73,7 @@ def status_of_what_needs_to_be_done(work_dir):
     return sts
 
 
-def make(work_dir, pool=None, verbose=True):
+def make(work_dir, out_path=None, pool=None, verbose=True):
     """
     pdf
         resources
@@ -234,6 +234,10 @@ def make(work_dir, pool=None, verbose=True):
         portable_document_format.images_to_pdf(
             list_of_image_paths=list_of_image_paths, out_path=pdf_path
         )
+
+    if out_path is not None:
+        shutil.copy(src=pdf_path, dst=out_path + ".part")
+        os.rename(out_path + ".part", out_path)
 
     return True
 
