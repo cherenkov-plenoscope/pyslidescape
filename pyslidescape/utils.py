@@ -63,12 +63,3 @@ def read_lines_from_textfile(path):
 
 def mtime(path):
     return os.stat(path).st_mtime
-
-
-def youngest_mtime_in_dir(path):
-    paths = glob(path=path, pattern="*")
-    mtimes = [mtime(p) for p in paths]
-    if len(mtimes) == 0:
-        return None
-    else:
-        return max(mtimes)
