@@ -48,7 +48,7 @@ def find_inkscape_labels_for_layers_in_inkscape_svg(path):
     for g in svg.getElementsByTagName("g"):
         if "inkscape:label" in g.attributes:
             if "id" in g.attributes:
-                if "layer" == g.attributes["id"].value:
+                if "layer" in g.attributes["id"].value:
                     inkscape_labels.append(
                         g.attributes["inkscape:label"].value
                     )
@@ -130,18 +130,18 @@ def init_slide_svg(num_pixel_width, num_pixel_height, docname="slide"):
     <!-- Created with Inkscape (http://www.inkscape.org/) -->
 
     <svg
-       width="{num_pixel_width:d}px"
-       height="{num_pixel_height:d}px"
-       viewBox="0 0 {num_pixel_width:d} {num_pixel_height:d}"
-       version="1.1"
-       id="SVGRoot"
-       inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
-       sodipodi:docname="{docname:s}"
-       xml:space="preserve"
-       xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-       xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-       xmlns="http://www.w3.org/2000/svg"
-       xmlns:svg="http://www.w3.org/2000/svg">
+        width="{num_pixel_width:d}px"
+        height="{num_pixel_height:d}px"
+        viewBox="0 0 {num_pixel_width:d} {num_pixel_height:d}"
+        version="1.1"
+        id="SVGRoot"
+        inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+        sodipodi:docname="{docname:s}"
+        xml:space="preserve"
+        xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+        xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+        xmlns="http://www.w3.org/2000/svg"
+        xmlns:svg="http://www.w3.org/2000/svg">
     </svg>
     """
     return svg
