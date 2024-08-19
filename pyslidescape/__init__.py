@@ -15,6 +15,9 @@ from xml.dom import minidom
 
 
 def glob(path, pattern):
+    """
+    A glob which can find hidden files.
+    """
     out = []
     for p in pathlib.Path(path).glob(pattern):
         out.append(str(p))
