@@ -51,6 +51,24 @@ def main():
         help=("Path of the empty slide."),
     )
 
+    # render latex slide
+    # ------------------
+    latex_cmd = commands.add_parser(
+        "latex", help="Renders a latex slide.tex into a png image."
+    )
+    latex_cmd.add_argument(
+        "latex_path",
+        metavar="IN_PATH",
+        type=str,
+        help=("Path to the input latex slide.tex"),
+    )
+    latex_cmd.add_argument(
+        "out_path",
+        metavar="OUT_PATH",
+        type=str,
+        help=("Path to the output png image"),
+    )
+
     args = parser.parse_args()
 
     if args.command == "compile":
@@ -63,7 +81,10 @@ def main():
         pyslidescape.write_template_slide(
             out_path=args.out_path,
         )
-
+    elif args.command == "latex":
+        pyslidescape.latex.render_slide_into_png(
+            latex_path=args.latex_path, out_path=args.out_path
+        )
     else:
         print("No or unknown command.")
         parser.print_help()
