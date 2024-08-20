@@ -19,20 +19,20 @@ def main():
     )
     compile_cmd.add_argument(
         "work_dir",
-        metavar="PATH",
+        metavar="IN_PATH",
         type=str,
         help=("The working directory to contain the raw presentation slides."),
     )
     compile_cmd.add_argument(
         "out_path",
-        metavar="PATH",
+        metavar="OUT_PATH",
         type=str,
         help=("Path of the output PDF."),
     )
     compile_cmd.add_argument(
         "-i",
         "--num_threads",
-        metavar="NUM",
+        metavar="NUM_THREADS",
         type=int,
         help=("The number of threads to use."),
         required=False,
