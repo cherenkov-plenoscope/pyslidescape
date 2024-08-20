@@ -3,7 +3,8 @@ pyslidescape
 ############
 |TestStatus| |PyPiStatus| |BlackStyle| |BlackPackStyle| |MITLicenseBadge|
 
-Lorem ipsum...
+Create your presentation slides in inkscape! `pyslidescape` renders your
+inkscape slides into a pdf file.
 
 .. |TestStatus| image:: https://github.com/cherenkov-plenoscope/pyslidescape/actions/workflows/test.yml/badge.svg?branch=main
     :target: https://github.com/cherenkov-plenoscope/pyslidescape/actions/workflows/test.yml
