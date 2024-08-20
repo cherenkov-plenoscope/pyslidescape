@@ -3,6 +3,7 @@ from . import inkscape
 from . import utils
 from . import portable_document_format
 from . import template
+from . import latex
 
 import os
 import shutil

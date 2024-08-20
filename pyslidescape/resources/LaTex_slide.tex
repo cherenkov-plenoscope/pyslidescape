@@ -1,0 +1,67 @@
+\documentclass{minimal}
+\usepackage[
+paperwidth=16cm,
+paperheight=9cm,
+layoutwidth=16cm,
+layoutheight=9cm,
+layouthoffset=0cm,
+layoutvoffset=0cm
+]{geometry}
+\usepackage[absolute,overlay]{textpos}
+\setlength{\TPHorizModule}{1cm}
+\setlength{\TPVertModule}{1cm}
+\usepackage{amsmath,amssymb,amsfonts,amsthm}
+\usepackage{booktabs}
+
+\begin{document}
+    \begin{textblock}{7}(0.5,2)
+        Disk:
+        \begin{eqnarray*}
+            Q_\mathrm{eff,disk} &=& \frac{1}{M} \sum_m^M f_m A_\mathrm{disk} \Omega_\mathrm{cone}\\
+            \frac{
+                \Delta Q_\mathrm{eff,disk}
+            }{
+                Q_\mathrm{eff,disk}
+            }
+            &=&
+            \frac{
+                \sqrt{F}
+            }{
+                F
+            }\\
+            F &=& \sum_m^M f_m
+        \end{eqnarray*}
+    \end{textblock}
+    \begin{textblock}{7}(7.5,2)
+        Grid:
+        \begin{eqnarray*}
+            Q_\mathrm{eff,grid} &=& \frac{1}{M} \sum_m^M f_m N_m A_\mathrm{bin} \Omega_{\text{sky-bins},m}\\
+            \frac{
+                \Delta Q_\mathrm{eff,grid}
+            }{
+                Q_\mathrm{eff,grid}
+            }
+            &=&
+            \frac{
+                \sqrt{\sum_m^M f_m {N_m}^2}
+            }{
+                \sum_m^M f_m N_m
+            }
+        \end{eqnarray*}
+    \end{textblock}
+
+    \begin{textblock}{14}(0.5,6)
+        \begingroup
+            \fontsize{8pt}{10pt}\selectfont
+            \begin{tabular}{l@{\hskip 0.5cm}l}
+            $Q_\mathrm{eff}$ & Effective Etendue (Area $\times$ solid angle).\\
+            $f_m$ & Is $1$ if $m$-th event passes the instrument's trigger and $0$ when not.\\
+            $M$ & Number of thrown events. \\
+            $A_\mathrm{disk}$ & Area of scatter disk.\\
+            $A_\mathrm{bin}$ & Area of a single grid bin.\\
+            $N_m$ & Number of grid bins with Cherenkov light above a loose threshold in the $m$-th event.\\
+            $F$ & Number of events passing the instrument's trigger (where $f_m = 1$).\\
+            \end{tabular}
+        \endgroup
+    \end{textblock}
+\end{document}
