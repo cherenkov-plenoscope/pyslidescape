@@ -12,6 +12,19 @@ def main():
     )
     commands = parser.add_subparsers(help="Commands", dest="command")
 
+
+    # init
+    # ----
+    init_cmd = commands.add_parser(
+        "init", help="Initialize a presentation template."
+    )
+    init_cmd.add_argument(
+        "path",
+        metavar="PATH",
+        type=str,
+        help=("Path to init the template presentation in."),
+    )
+
     # compile
     # =======
     compile_cmd = commands.add_parser(
@@ -71,7 +84,9 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "compile":
+    if args.command == "init":
+        pyslidescape.template.init(work_dir=args.path)
+    elif args.command == "compile":
         pyslidescape.make(
             work_dir=args.work_dir,
             out_path=args.out_path,
