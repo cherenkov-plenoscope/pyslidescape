@@ -32,7 +32,7 @@ def init(work_dir):
         make_text_element(
             x=0,
             y=820,
-            text="It linked via: '../../resources/logo.jpg'.",
+            text="It is linked via: '../../resources/logo.jpg'.",
             font_size=48,
         ),
     )
@@ -45,7 +45,7 @@ def init(work_dir):
             dy=480,
             href="resources/work_in_progress_placeholder.svg",
         ),
-        make_text_element(x=800, y=700, text="My work.", font_size=48),
+        make_text_element(x=800, y=750, text="My work.", font_size=48),
     )
 
     content = element_join(
@@ -60,11 +60,39 @@ def init(work_dir):
         show_layer_set=["one", "one,two"],
     )
 
+    base = element_join(
+        make_text_element(x=100, y=100, text="This is my work", font_size=64),
+        make_image_element(
+            x=200, y=300, dx=320, dy=320, href="../../resources/logo.jpg"
+        ),
+    )
+
+    wait = element_join(
+        make_text_element(x=800, y=750, text="wait for it...", font_size=48),
+    )
+
+    work = element_join(
+        make_image_element(
+            x=1000,
+            y=200,
+            dx=480,
+            dy=480,
+            href="resources/explode.jpg",
+        ),
+        make_text_element(x=800, y=750, text="boom.", font_size=48),
+    )
+
+    content = element_join(
+        make_inkscape_layer(content=base, label="base"),
+        make_inkscape_layer(content=wait, label="wait"),
+        make_inkscape_layer(content=work, label="work"),
+    )
+
     init_slide_dir(
         path=os.path.join(slides_dir, "my_work"),
-        content="",
-        resources=[],
-        show_layer_set=["first", "first,second"],
+        content=content,
+        resources=["explode.jpg"],
+        show_layer_set=["base", "base,wait", "base,work"],
     )
 
     slides_txt_path = os.path.join(work_dir, "slides.txt")
