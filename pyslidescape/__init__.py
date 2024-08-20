@@ -2,6 +2,7 @@ from .version import __version__
 from . import inkscape
 from . import utils
 from . import portable_document_format
+from . import template
 
 import os
 import shutil
@@ -9,58 +10,10 @@ import warnings
 import multiprocessing
 
 
-def init(work_dir):
-    os.makedirs(work_dir, exist_ok=True)
-    os.makedirs(os.path.join(work_dir, "resources"), exist_ok=True)
-
-    _fname = "max_planck_institute_for_nuclearphysics.svg"
-    shutil.copy(
-        os.path.join(utils.get_resources_dir(), _fname),
-        os.path.join(work_dir, "resources", _fname),
-    )
-
-    slides_dir = os.path.join(work_dir, "slides")
-    os.makedirs(slides_dir, exist_ok=True)
-
-    init_slide_dir(path=os.path.join(slides_dir, "first"))
-    _fname = "work_in_progress_placeholder.svg"
-    shutil.copy(
-        os.path.join(utils.get_resources_dir(), _fname),
-        os.path.join(slides_dir, "first", "resources", _fname),
-    )
-
-    init_slide_dir(path=os.path.join(slides_dir, "second"))
-    _fname = "work_in_progress_placeholder.svg"
-    shutil.copy(
-        os.path.join(utils.get_resources_dir(), _fname),
-        os.path.join(slides_dir, "second", "resources", _fname),
-    )
-
-    slides_txt_path = os.path.join(work_dir, "slides.txt")
-    with open(slides_txt_path, "wt") as f:
-        f.write("first\n")
-        f.write("second\n")
-
-
-def init_slide_dir(path):
-    os.makedirs(path, exist_ok=True)
-    os.makedirs(os.path.join(path, "resources"), exist_ok=True)
-    slide_path = os.path.join(path, "layers.svg")
-
-    with open(slide_path, "wt") as f:
-        f.write(inkscape.init_slide_svg(1920, 1080))
-
-    layer_order_path = os.path.join(path, "layers.txt")
-    with open(layer_order_path, "wt") as f:
-        f.write("one\n")
-        f.write("one,two\n")
-
-
 def status_of_what_needs_to_be_done(work_dir):
     slides_txt_path = os.path.join(work_dir, "slides.txt")
     slides = utils.read_lines_from_textfile(path=slides_txt_path)
-    sts = {}
-    sts["slides"] = []
+    sts = []
     for slide in slides:
         slide_dir = os.path.join(work_dir, "slides", slide)
         sls = {}
@@ -69,7 +22,7 @@ def status_of_what_needs_to_be_done(work_dir):
         lines = utils.read_lines_from_textfile(path=layers_txt_path)
         show_layer_sets = [str.split(line, ",") for line in lines]
         sls["show_layer_sets"] = show_layer_sets
-        sts["slides"].append(sls)
+        sts.append(sls)
     return sts
 
 
@@ -101,8 +54,8 @@ def make(work_dir, out_path=None, pool=None, verbose=True):
     todo = status_of_what_needs_to_be_done(work_dir=work_dir)
 
     resource_updates["slides"] = {}
-    for i in range(len(todo["slides"])):
-        slide = todo["slides"][i]["slide"]
+    for i in range(len(todo)):
+        slide = todo[i]["slide"]
 
         resource_updates["slides"][slide] = utils.copytree_lazy(
             src=os.path.join(work_dir, "slides", slide, "resources"),
@@ -114,9 +67,9 @@ def make(work_dir, out_path=None, pool=None, verbose=True):
     # ------------
     svg_roll_out_jobs = []
     slides_all_layers = {}
-    for i in range(len(todo["slides"])):
-        slide = todo["slides"][i]["slide"]
-        show_layer_sets = todo["slides"][i]["show_layer_sets"]
+    for i in range(len(todo)):
+        slide = todo[i]["slide"]
+        show_layer_sets = todo[i]["show_layer_sets"]
         slide_dir = os.path.join(work_dir, "slides", slide)
 
         src_path = os.path.join(slide_dir, "layers.svg")
@@ -172,9 +125,9 @@ def make(work_dir, out_path=None, pool=None, verbose=True):
 
     render_jobs = []
     list_of_image_paths = []
-    for i in range(len(todo["slides"])):
-        slide = todo["slides"][i]["slide"]
-        show_layer_sets = todo["slides"][i]["show_layer_sets"]
+    for i in range(len(todo)):
+        slide = todo[i]["slide"]
+        show_layer_sets = todo[i]["show_layer_sets"]
 
         for show_layer_set in show_layer_sets:
             show_label_str = str.join(",", list(show_layer_set))
