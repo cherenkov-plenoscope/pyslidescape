@@ -5,6 +5,14 @@ import multiprocessing
 import shutil
 
 
+class SerialPool:
+    def __init__(self):
+        pass
+
+    def map(self, func, iterable):
+        return [func(item) for item in iterable]
+
+
 def init_multiprocessing_pool_if_None(pool):
     if pool is None:
         total_count = multiprocessing.cpu_count()

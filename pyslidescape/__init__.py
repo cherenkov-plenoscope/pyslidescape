@@ -43,6 +43,14 @@ def make(work_dir, out_path=None, pool=None, verbose=True):
     build_dir = os.path.join(work_dir, "build")
     os.makedirs(build_dir, exist_ok=True)
 
+    todo = status_of_what_needs_to_be_done(work_dir=work_dir)
+
+    # latex snippets and slides
+    # -------------------------
+    update_latex_slides_and_snippets(
+        work_dir=work_dir, todo=todo, pool=pool, verbose=verbose
+    )
+
     # resources
     # ---------
     resource_updates = {}
@@ -51,8 +59,6 @@ def make(work_dir, out_path=None, pool=None, verbose=True):
         dst=os.path.join(build_dir, "resources"),
         verbose=verbose,
     )
-
-    todo = status_of_what_needs_to_be_done(work_dir=work_dir)
 
     resource_updates["slides"] = {}
     for i in range(len(todo)):
@@ -222,3 +228,97 @@ def run_png_render_job(job):
         out_path=job["dst_jpg_path"],
         background_opacity=job["background_opacity"],
     )
+
+
+def update_latex_slides_and_snippets(
+    work_dir, todo=None, pool=None, verbose=True
+):
+    pool = utils.init_multiprocessing_pool_if_None(pool=pool)
+
+    if todo is None:
+        todo = status_of_what_needs_to_be_done(work_dir=work_dir)
+
+    latex_types = {
+        "slide": ".png",
+        "snippet": ".svg",
+    }
+    common_resource_dir = os.path.join(work_dir, "resources")
+
+    jobs = []
+
+    for lt in latex_types:
+        for src_path in utils.glob(common_resource_dir, f"*.{lt:s}.tex"):
+            _src_path, _ = os.path.splitext(src_path)
+            dst_path = _src_path + latex_types[lt]
+            _job = _make_latex_job(src_path=src_path, dst_path=dst_path)
+            if _job is not None:
+                _job["latex_type"] = lt
+                jobs.append(_job)
+                if verbose:
+                    print(
+                        f"latex render: {dst_path:s} because {_job['reason']:s}."
+                    )
+
+        for i in range(len(todo)):
+            slide = todo[i]["slide"]
+            show_layer_sets = todo[i]["show_layer_sets"]
+            slide_dir = os.path.join(work_dir, "slides", slide)
+
+            slide_resource_dir = os.path.join(slide_dir, "resources")
+
+            for src_path in utils.glob(slide_resource_dir, f"*.{lt:s}.tex"):
+                _src_path, _ = os.path.splitext(src_path)
+                dst_path = _src_path + latex_types[lt]
+
+                _job = _make_latex_job(src_path=src_path, dst_path=dst_path)
+                if _job is not None:
+                    _job["latex_type"] = lt
+                    jobs.append(_job)
+                    if verbose:
+                        print(
+                            f"latex render: {dst_path:s} because {_job['reason']:s}."
+                        )
+
+    pool.map(run_latex_render_job, jobs)
+
+
+def _make_latex_job(src_path, dst_path):
+    need_to_render = False
+
+    if not os.path.exists(dst_path):
+        reason = "does not exist yet"
+        need_to_render = True
+    else:
+        src_mtime = utils.mtime(src_path)
+        dst_mtime = utils.mtime(dst_path)
+        if src_mtime > dst_mtime:
+            reason = "needs update"
+            need_to_render = True
+
+    if need_to_render:
+        job = {}
+        job["reason"] = reason
+        job["src_path"] = src_path
+        job["dst_path"] = dst_path
+        return job
+    else:
+        return None
+
+
+def run_latex_render_job(job):
+    if job["latex_type"] == "snippet":
+        with open(job["src_path"], "rt") as f:
+            latex_string = f.read()
+
+        latex.render_snippet_to_svg(
+            latex_string=latex_string,
+            out_path=job["dst_path"],
+        )
+
+    elif job["latex_type"] == "slide":
+        latex.render_slide_to_png(
+            latex_path=job["src_path"],
+            out_path=job["dst_path"],
+        )
+    else:
+        raise AssertionError(f"No such latex_type {job['latex_type']:s}.")

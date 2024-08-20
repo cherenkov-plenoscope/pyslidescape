@@ -95,10 +95,49 @@ def init(work_dir):
         show_layer_set=["base", "base,wait", "base,work"],
     )
 
+    base = element_join(
+        make_text_element(
+            x=100, y=100, text="Happy Appendix everyone!", font_size=64
+        ),
+        make_image_element(
+            x=200, y=300, dx=320, dy=320, href="../../resources/logo.jpg"
+        ),
+    )
+    also = element_join(
+        make_text_element(
+            x=600, y=500, text="Also: Latex snippets.", font_size=64
+        ),
+        make_image_element(
+            x=950, y=600, href="resources/example_LaTex.snippet.svg"
+        ),
+    )
+    math = element_join(
+        make_image_element(
+            x=0,
+            y=0,
+            dx=1920,
+            dy=1080,
+            href="resources/example_LaTex.slide.png",
+        ),
+    )
+    content = element_join(
+        make_inkscape_layer(content=math, label="math"),
+        make_inkscape_layer(content=also, label="also"),
+        make_inkscape_layer(content=base, label="base"),
+    )
+
+    init_slide_dir(
+        path=os.path.join(slides_dir, "appendix"),
+        content=content,
+        resources=["example_LaTex.slide.tex", "example_LaTex.snippet.tex"],
+        show_layer_set=["base", "also,base", "math,base"],
+    )
+
     slides_txt_path = os.path.join(work_dir, "slides.txt")
     with open(slides_txt_path, "wt") as f:
         f.write("welcome\n")
         f.write("my_work\n")
+        f.write("appendix\n")
 
 
 def init_slide_dir(path, content="", resources=[], show_layer_set=[]):
@@ -188,15 +227,18 @@ def make_inkscape_layer(label, content, uid=123):
     return svg
 
 
-def make_image_element(x, y, dx, dy, href, uid=123):
-    return f"""
-    <image
-        width="{dx:f}"
-        height="{dy:f}"
-        preserveAspectRatio="none"
-        xlink:href="{href:s}"
-        id="image{uid:d}"
-        x="{x:f}"
-        y="{y:f}"
-        style="display:inline"
-    />"""
+def make_image_element(x, y, href, dx=None, dy=None, uid=123):
+    svg = ""
+    svg += "<image\n"
+    if dx is not None:
+        svg += f'    width="{dx:f}"\n'
+    if dy is not None:
+        svg += f'    height="{dy:f}"\n'
+    svg += '    preserveAspectRatio="none"\n'
+    svg += f'    xlink:href="{href:s}"\n'
+    svg += f'    id="image{uid:d}"\n'
+    svg += f'    x="{x:f}"\n'
+    svg += f'    y="{y:f}"\n'
+    svg += '    style="display:inline"\n'
+    svg += "/>"
+    return svg

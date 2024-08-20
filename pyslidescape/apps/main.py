@@ -12,7 +12,6 @@ def main():
     )
     commands = parser.add_subparsers(help="Commands", dest="command")
 
-
     # init
     # ----
     init_cmd = commands.add_parser(
@@ -59,7 +58,7 @@ def main():
     )
     slide_cmd.add_argument(
         "out_path",
-        metavar="PATH",
+        metavar="OUT_PATH",
         type=str,
         help=("Path of the empty slide."),
     )
@@ -71,7 +70,7 @@ def main():
     )
     latex_cmd.add_argument(
         "latex_path",
-        metavar="IN_PATH",
+        metavar="LATEX_PATH",
         type=str,
         help=("Path to the input latex slide.tex"),
     )
@@ -87,17 +86,25 @@ def main():
     if args.command == "init":
         pyslidescape.template.init(work_dir=args.path)
     elif args.command == "compile":
+        if args.num_threads is not None:
+            if args.num_threads == 1:
+                pool = pyslidescape.utils.SerialPool()
+            else:
+                pool = multiprocessing.Pool(args.num_threads)
+        else:
+            pool = multiprocessing.Pool(args.num_threads)
+
         pyslidescape.make(
             work_dir=args.work_dir,
             out_path=args.out_path,
-            pool=multiprocessing.Pool(args.num_threads),
+            pool=pool,
         )
     elif args.command == "slide":
         pyslidescape.write_template_slide(
             out_path=args.out_path,
         )
     elif args.command == "latex":
-        pyslidescape.latex.render_slide_into_png(
+        pyslidescape.latex.render_slide_to_png(
             latex_path=args.latex_path, out_path=args.out_path
         )
     else:
