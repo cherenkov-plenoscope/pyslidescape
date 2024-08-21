@@ -94,7 +94,7 @@ def main():
         else:
             pool = multiprocessing.Pool(args.num_threads)
 
-        pyslidescape.make(
+        pyslidescape.compile(
             work_dir=args.work_dir,
             out_path=args.out_path,
             pool=pool,

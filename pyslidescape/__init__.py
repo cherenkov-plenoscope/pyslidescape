@@ -27,7 +27,7 @@ def status_of_what_needs_to_be_done(work_dir):
     return sts
 
 
-def make(work_dir, out_path=None, pool=None, verbose=True):
+def compile(work_dir, out_path=None, pool=None, verbose=True):
     """
     pdf
         resources
