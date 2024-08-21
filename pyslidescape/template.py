@@ -6,6 +6,10 @@ import shutil
 import textwrap
 
 
+def default_presentation_config():
+    return {"slide_format": deafault_slide_format()}
+
+
 def deafault_slide_format():
     return {
         "num_pixel_width": 1920,
@@ -13,16 +17,16 @@ def deafault_slide_format():
     }
 
 
-def init_example_presentation(work_dir, slide_format=None):
+def init_example_presentation(work_dir, presentation_config=None):
     """
     A minimal example presentation with some basic features.
     """
-    if slide_format is None:
-        slide_format = deafault_slide_format()
+    if presentation_config is None:
+        presentation_config = default_presentation_config()
 
     os.makedirs(work_dir, exist_ok=True)
     utils.write_dict_to_json(
-        os.path.join(work_dir, "slide_format.json"), slide_format
+        os.path.join(work_dir, ".config.json"), presentation_config
     )
 
     os.makedirs(os.path.join(work_dir, "resources"), exist_ok=True)
@@ -75,7 +79,7 @@ def init_example_presentation(work_dir, slide_format=None):
         content=content,
         resources=["work_in_progress_placeholder.svg"],
         show_layer_set=["one", "one,two"],
-        slide_format=slide_format,
+        slide_format=presentation_config["slide_format"],
     )
 
     base = element_join(
@@ -111,7 +115,7 @@ def init_example_presentation(work_dir, slide_format=None):
         content=content,
         resources=["explode.jpg"],
         show_layer_set=["base", "base,wait", "base,work"],
-        slide_format=slide_format,
+        slide_format=presentation_config["slide_format"],
     )
 
     base = element_join(
@@ -150,7 +154,7 @@ def init_example_presentation(work_dir, slide_format=None):
         content=content,
         resources=["example_LaTex.slide.tex", "example_LaTex.snippet.tex"],
         show_layer_set=["base", "also,base", "math,base"],
-        slide_format=slide_format,
+        slide_format=presentation_config["slide_format"],
     )
 
     slides_txt_path = os.path.join(work_dir, "slides.txt")

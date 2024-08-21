@@ -13,12 +13,13 @@ import multiprocessing
 
 def add_slide(work_dir, slide_name, slide_format=None):
     if slide_format is None:
-        slide_format = utils.read_json_to_dict(
-            os.path.join(work_dir, "slide_format.json")
+        presentation_config = utils.read_json_to_dict(
+            os.path.join(work_dir, ".config.json")
         )
+        slide_format = presentation_config["slide_format"]
 
     slide_dir = os.path.join(work_dir, "slides", slide_name)
-    template.init_slide_dir(path=slide_dir)
+    template.init_slide_dir(path=slide_dir, slide_format=slide_format)
 
 
 def status_of_what_needs_to_be_done(work_dir):
@@ -48,9 +49,11 @@ def compile(work_dir, out_path=None, pool=None, verbose=True):
             slide_B
                 ...
     """
+    if out_path is None:
+        out_path = os.path.join(work_dir, "slides.pdf")
     pool = utils.init_multiprocessing_pool_if_None(pool=pool)
 
-    build_dir = os.path.join(work_dir, "build")
+    build_dir = os.path.join(work_dir, ".build")
     os.makedirs(build_dir, exist_ok=True)
 
     todo = status_of_what_needs_to_be_done(work_dir=work_dir)
@@ -189,7 +192,7 @@ def compile(work_dir, out_path=None, pool=None, verbose=True):
     # write pdf
     # ---------
     need_to_render_pdf = False
-    pdf_path = os.path.join(build_dir, "presentation.pdf")
+    pdf_path = os.path.join(build_dir, "slides.pdf")
 
     if not os.path.exists(pdf_path):
         reason = "does not exist yet"
