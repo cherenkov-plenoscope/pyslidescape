@@ -3,6 +3,7 @@ import os
 import pathlib
 import multiprocessing
 import shutil
+import json
 
 
 class SerialPool:
@@ -13,11 +14,24 @@ class SerialPool:
         return [func(item) for item in iterable]
 
 
+def init_multiprocessing_pool(num_threads=1):
+    """
+    This is only to ease debugging.
+    Do not spawn an additional thread when num_threads == 1, but do the compute
+    in the already existing thread.
+    """
+    assert num_threads > 0
+    if num_threads == 1:
+        return SerialPool()
+    else:
+        return multiprocessing.Pool(num_threads)
+
+
 def init_multiprocessing_pool_if_None(pool):
     if pool is None:
         total_count = multiprocessing.cpu_count()
         count = max([1, total_count // 4])
-        return multiprocessing.Pool(count)
+        return multiprocessing_pool(count)
     else:
         return pool
 
@@ -71,3 +85,15 @@ def read_lines_from_textfile(path):
 
 def mtime(path):
     return os.stat(path).st_mtime
+
+
+def write_dict_to_json(path, d):
+    tmp_path = path + ".part"
+    with open(tmp_path, "wt") as f:
+        f.write(json.dumps(d, indent=4))
+    os.rename(tmp_path, path)
+
+
+def read_json_to_dict(path):
+    with open(path, "rt") as f:
+        return json.loads(f.read())

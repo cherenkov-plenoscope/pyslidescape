@@ -10,6 +10,10 @@ def main():
         prog="pyslidescape",
         description="Make presentation slides from images and vector drawings.",
     )
+    parser.add_argument(
+        "-v", "--version", action="store_true", help="Print the version."
+    )
+
     commands = parser.add_subparsers(help="Commands", dest="command")
 
     # init
@@ -17,26 +21,18 @@ def main():
     init_cmd = commands.add_parser(
         "init", help="Initialize a presentation template."
     )
-    init_cmd.add_argument(
-        "path",
-        metavar="PATH",
-        type=str,
-        help=("Path to init the template presentation in."),
-    )
+    add_work_dir_argument_to_command(cmd=init_cmd)
 
     # compile
     # =======
     compile_cmd = commands.add_parser(
         "compile", help="Compiles the slices into a production ready PDF."
     )
-    compile_cmd.add_argument(
-        "work_dir",
-        metavar="IN_PATH",
-        type=str,
-        help=("The working directory to contain the raw presentation slides."),
-    )
+    add_work_dir_argument_to_command(cmd=compile_cmd)
     compile_cmd.add_argument(
         "out_path",
+        nargs="?",
+        default=None,
         metavar="OUT_PATH",
         type=str,
         help=("Path of the output PDF."),
@@ -50,17 +46,21 @@ def main():
         required=False,
         default=1,
     )
+    compile_cmd.add_argument(
+        "--verbose", action="store_true", help="Print what is done."
+    )
 
     # slide
     # =====
     slide_cmd = commands.add_parser(
-        "slide", help="Writes an empty slide in svg to a path."
+        "add-slide", help="Adds a new and empty slide to the presentation."
     )
+    add_work_dir_argument_to_command(cmd=slide_cmd)
     slide_cmd.add_argument(
-        "out_path",
-        metavar="OUT_PATH",
+        "slide_name",
+        metavar="SLIDE_NAME",
         type=str,
-        help=("Path of the empty slide."),
+        help=("The name of the new slide."),
     )
 
     # render latex slide
@@ -83,25 +83,25 @@ def main():
 
     args = parser.parse_args()
 
-    if args.command == "init":
-        pyslidescape.template.init(work_dir=args.path)
-    elif args.command == "compile":
-        if args.num_threads is not None:
-            if args.num_threads == 1:
-                pool = pyslidescape.utils.SerialPool()
-            else:
-                pool = multiprocessing.Pool(args.num_threads)
-        else:
-            pool = multiprocessing.Pool(args.num_threads)
+    if args.version:
+        print(pyslidescape.__version__)
+        return 0
 
+    if args.command == "init":
+        pyslidescape.template.init_example_presentation(work_dir=args.work_dir)
+    elif args.command == "compile":
         pyslidescape.compile(
             work_dir=args.work_dir,
             out_path=args.out_path,
-            pool=pool,
+            pool=pyslidescape.utils.init_multiprocessing_pool(
+                args.num_threads
+            ),
+            verbose=args.verbose,
         )
-    elif args.command == "slide":
-        pyslidescape.write_template_slide(
-            out_path=args.out_path,
+    elif args.command == "add-slide":
+        pyslidescape.add_slide(
+            work_dir=args.work_dir,
+            slide_name=args.slide_name,
         )
     elif args.command == "latex":
         pyslidescape.latex.render_slide_to_png(
@@ -111,6 +111,17 @@ def main():
         print("No or unknown command.")
         parser.print_help()
         sys.exit(17)
+
+
+def add_work_dir_argument_to_command(cmd):
+    cmd.add_argument(
+        "work_dir",
+        nargs="?",
+        default=os.curdir,
+        metavar="WORK_DIR",
+        type=str,
+        help=("The working directory to contain the raw presentation slides."),
+    )
 
 
 if __name__ == "__main__":

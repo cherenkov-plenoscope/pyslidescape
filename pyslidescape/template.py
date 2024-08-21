@@ -6,8 +6,25 @@ import shutil
 import textwrap
 
 
-def init(work_dir):
+def deafault_slide_format():
+    return {
+        "num_pixel_width": 1920,
+        "num_pixel_height": 1080,
+    }
+
+
+def init_example_presentation(work_dir, slide_format=None):
+    """
+    A minimal example presentation with some basic features.
+    """
+    if slide_format is None:
+        slide_format = deafault_slide_format()
+
     os.makedirs(work_dir, exist_ok=True)
+    utils.write_dict_to_json(
+        os.path.join(work_dir, "slide_format.json"), slide_format
+    )
+
     os.makedirs(os.path.join(work_dir, "resources"), exist_ok=True)
     _fname = "logo.jpg"
     shutil.copy(
@@ -58,6 +75,7 @@ def init(work_dir):
         content=content,
         resources=["work_in_progress_placeholder.svg"],
         show_layer_set=["one", "one,two"],
+        slide_format=slide_format,
     )
 
     base = element_join(
@@ -93,6 +111,7 @@ def init(work_dir):
         content=content,
         resources=["explode.jpg"],
         show_layer_set=["base", "base,wait", "base,work"],
+        slide_format=slide_format,
     )
 
     base = element_join(
@@ -131,6 +150,7 @@ def init(work_dir):
         content=content,
         resources=["example_LaTex.slide.tex", "example_LaTex.snippet.tex"],
         show_layer_set=["base", "also,base", "math,base"],
+        slide_format=slide_format,
     )
 
     slides_txt_path = os.path.join(work_dir, "slides.txt")
@@ -140,7 +160,12 @@ def init(work_dir):
         f.write("appendix\n")
 
 
-def init_slide_dir(path, content="", resources=[], show_layer_set=[]):
+def init_slide_dir(
+    path, content="", resources=[], show_layer_set=[], slide_format=None
+):
+    if slide_format is None:
+        slide_format = deafault_slide_format()
+
     os.makedirs(path, exist_ok=True)
     os.makedirs(os.path.join(path, "resources"), exist_ok=True)
     for resource in resources:
@@ -151,7 +176,7 @@ def init_slide_dir(path, content="", resources=[], show_layer_set=[]):
 
     slide_path = os.path.join(path, "layers.svg")
     with open(slide_path, "wt") as f:
-        f.write(make_slide(1920, 1080, content=content))
+        f.write(make_slide(slide_format=slide_format, content=content))
 
     layer_order_path = os.path.join(path, "layers.txt")
     with open(layer_order_path, "wt") as f:
@@ -159,18 +184,21 @@ def init_slide_dir(path, content="", resources=[], show_layer_set=[]):
             f.write(l + "\n")
 
 
-def make_slide(num_pixel_width=1920, num_pixel_height=1080, content=""):
-    assert num_pixel_width > 0
-    assert num_pixel_height > 0
+def make_slide(slide_format, content=""):
+    sf = slide_format
+    assert sf["num_pixel_width"] > 0
+    assert sf["num_pixel_height"] > 0
+    w = sf["num_pixel_width"]
+    h = sf["num_pixel_height"]
 
     svg = ""
     svg += '<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
     svg += "<!-- Created with pyslidescape (https://github.com/cherenkov-plenoscope/pyslidescape/) -->\n"
     svg += "\n"
     svg += "<svg\n"
-    svg += f'    width="{num_pixel_width:.1f}px"\n'
-    svg += f'    height="{num_pixel_height:.1f}px"\n'
-    svg += f'    viewBox="0 0 {num_pixel_width:.1f} {num_pixel_height:.1f}"\n'
+    svg += f'    width="{w:.1f}px"\n'
+    svg += f'    height="{h:.1f}px"\n'
+    svg += f'    viewBox="0 0 {w:.1f} {h:.1f}"\n'
     svg += '    version="1.1"\n'
     svg += '    id="SVGRoot"\n'
     svg += '    xmlns="http://www.w3.org/2000/svg"\n'

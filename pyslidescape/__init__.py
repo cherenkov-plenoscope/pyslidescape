@@ -11,6 +11,16 @@ import warnings
 import multiprocessing
 
 
+def add_slide(work_dir, slide_name, slide_format=None):
+    if slide_format is None:
+        slide_format = utils.read_json_to_dict(
+            os.path.join(work_dir, "slide_format.json")
+        )
+
+    slide_dir = os.path.join(work_dir, "slides", slide_name)
+    template.init_slide_dir(path=slide_dir)
+
+
 def status_of_what_needs_to_be_done(work_dir):
     slides_txt_path = os.path.join(work_dir, "slides.txt")
     slides = utils.read_lines_from_textfile(path=slides_txt_path)
@@ -190,7 +200,8 @@ def compile(work_dir, out_path=None, pool=None, verbose=True):
             need_to_render_pdf = True
 
     if need_to_render_pdf:
-        print(f"compile pdf because {reason:s}.")
+        if verbose:
+            print(f"compile pdf because {reason:s}.")
         portable_document_format.images_to_pdf(
             list_of_image_paths=list_of_image_paths, out_path=pdf_path
         )
