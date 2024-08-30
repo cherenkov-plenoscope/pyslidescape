@@ -5,6 +5,7 @@ from . import portable_document_format
 from . import template
 from . import latex
 from . import layers_txt
+from . import notes
 
 import os
 import shutil
@@ -13,17 +14,25 @@ import multiprocessing
 
 
 def add_slide(work_dir, slide_name, slide_format=None):
-    if slide_format is None:
-        presentation_config = utils.read_json_to_dict(
-            os.path.join(work_dir, ".config.json")
-        )
-        slide_format = presentation_config["slide_format"]
-
     slide_dir = os.path.join(work_dir, "slides", slide_name)
     assert not os.path.exists(
         slide_dir
     ), f"The slide '{slide_name:s}' already exists."
-    template.init_slide_dir(path=slide_dir, slide_format=slide_format)
+
+    if slide_format is None:
+        slidescape_dir = os.path.join(work_dir, ".slidescape")
+        template_slide_dir = os.path.join(slidescape_dir, "template_slide")
+
+        if os.path.isdir(template_slide_dir):
+            shutil.copytree(src=template_slide_dir, dst=slide_dir)
+        else:
+            presentation_config = utils.read_json_to_dict(
+                os.path.join(slidescape_dir, "config.json")
+            )
+            slide_format = presentation_config["slide_format"]
+            template.init_slide_dir(path=slide_dir, slide_format=slide_format)
+    else:
+        template.init_slide_dir(path=slide_dir, slide_format=slide_format)
 
 
 def status_of_what_needs_to_be_done(work_dir):
