@@ -65,20 +65,70 @@ def main():
 
     # render latex slide
     # ------------------
-    latex_cmd = commands.add_parser(
-        "latex", help="Renders a latex slide.tex into a png image."
+    latex_slide_cmd = commands.add_parser(
+        "latex-slide", help="Renders a latex slide.tex into a png image."
     )
-    latex_cmd.add_argument(
+    latex_slide_cmd.add_argument(
         "latex_path",
         metavar="LATEX_PATH",
         type=str,
         help=("Path to the input latex slide.tex"),
     )
-    latex_cmd.add_argument(
+    latex_slide_cmd.add_argument(
         "out_path",
         metavar="OUT_PATH",
         type=str,
         help=("Path to the output png image"),
+    )
+
+    # render latex snippet
+    # --------------------
+    latex_snippet_cmd = commands.add_parser(
+        "latex-snippet", help="Renders a latex snippet.tex into an svg image."
+    )
+    latex_snippet_cmd.add_argument(
+        "out_path",
+        default=None,
+        metavar="OUT_PATH",
+        type=str,
+        help=("Path of the output svg."),
+    )
+    latex_snippet_cmd.add_argument(
+        "latex_string",
+        nargs="?",
+        default=None,
+        metavar="LATEX_STR",
+        type=str,
+        help=("The latex string."),
+    )
+    latex_snippet_cmd.add_argument(
+        "-i",
+        "--input_path",
+        default=None,
+        metavar="LATEX_PATH",
+        type=str,
+        help=("Path to a latex string."),
+    )
+    latex_snippet_cmd.add_argument(
+        "-s",
+        "--scale",
+        default=1.0,
+        metavar="SCALE",
+        type=float,
+        help=("Scale of the snippet."),
+    )
+    latex_snippet_cmd.add_argument(
+        "-w",
+        "--width",
+        default=6.5,
+        metavar="WIDTH",
+        type=float,
+        help=("Width of the document (linebreak)."),
+    )
+    latex_snippet_cmd.add_argument(
+        "--dark",
+        action="store_true",
+        help=("Set fontcolor to white for dark background."),
     )
 
     args = parser.parse_args()
@@ -103,9 +153,27 @@ def main():
             work_dir=args.work_dir,
             slide_name=args.slide_name,
         )
-    elif args.command == "latex":
+    elif args.command == "latex-slide":
         pyslidescape.latex.render_slide_to_png(
             latex_path=args.latex_path, out_path=args.out_path
+        )
+    elif args.command == "latex-snippet":
+        if args.input_path is not None:
+            args.latex_string == None
+            with open(args.input_path, "rt") as f:
+                latex_string = f.read()
+        elif args.latex_string is not None:
+            assert args.input_path is None
+            latex_string = args.latex_string
+        fontcolor = None
+        if args.dark:
+            fontcolor = "white"
+        pyslidescape.latex.render_snippet_to_svg(
+            latex_string=latex_string,
+            out_path=args.out_path,
+            scale=args.scale,
+            width_of_the_document_in_inches=args.width,
+            fontcolor=fontcolor,
         )
     else:
         print("No or unknown command.")

@@ -54,13 +54,18 @@ def render_snippet_to_svg(
     scale=8.0,
     width_of_the_document_in_inches=6.5,
     TMP_DIR=None,
+    fontcolor=None,
 ):
     doc = ""
     doc += "\\documentclass{{article}}\n"
     doc += "\\pagestyle{empty}\n"
     doc += "\\usepackage{amsmath,amssymb,amsfonts,amsthm}\n"
     doc += "\\usepackage{booktabs}\n"
+    doc += "\\usepackage{xcolor}\n"
     doc += usepackage_geometry(total=[width_of_the_document_in_inches, 8.75])
+    doc += "\n"
+    if fontcolor is not None:
+        doc += "\\color{" + fontcolor + "}\n"
     doc += "\\begin{document}\n"
     doc += "\n{:s}\n\n".format(latex_string)
     doc += "\\end{document}\n"

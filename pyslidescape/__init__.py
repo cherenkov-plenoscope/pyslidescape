@@ -4,6 +4,7 @@ from . import utils
 from . import portable_document_format
 from . import template
 from . import latex
+from . import layers_txt
 
 import os
 import shutil
@@ -19,6 +20,9 @@ def add_slide(work_dir, slide_name, slide_format=None):
         slide_format = presentation_config["slide_format"]
 
     slide_dir = os.path.join(work_dir, "slides", slide_name)
+    assert not os.path.exists(
+        slide_dir
+    ), f"The slide '{slide_name:s}' already exists."
     template.init_slide_dir(path=slide_dir, slide_format=slide_format)
 
 
@@ -30,15 +34,21 @@ def status_of_what_needs_to_be_done(work_dir):
         slide_dir = os.path.join(work_dir, "slides", slide)
         sls = {}
         sls["slide"] = slide
-        layers_txt_path = os.path.join(slide_dir, "layers.txt")
-        lines = utils.read_lines_from_textfile(path=layers_txt_path)
-        show_layer_sets = [str.split(line, ",") for line in lines]
+        with open(os.path.join(slide_dir, "layers.txt"), "rt") as f:
+            layers = layers_txt.loads(f.read())
+
+        show_layer_sets = [
+            layers_txt.split_show_layers_set(layer) for layer in layers
+        ]
         sls["show_layer_sets"] = show_layer_sets
+        sls["speech"] = {}
+        for layer in layers:
+            sls["speech"][layer] = layers[layer]
         sts.append(sls)
     return sts
 
 
-def compile(work_dir, out_path=None, pool=None, verbose=True):
+def compile(work_dir, out_path=None, pool=None, verbose=True, speech=False):
     """
     pdf
         resources
@@ -72,6 +82,13 @@ def compile(work_dir, out_path=None, pool=None, verbose=True):
         dst=os.path.join(build_dir, "resources"),
         verbose=verbose,
     )
+
+    # make slide dirs
+    # ---------------
+    for i in range(len(todo)):
+        slide = todo[i]["slide"]
+        slide_dir = os.path.join(build_dir, "slides", slide)
+        os.makedirs(slide_dir, exist_ok=True)
 
     resource_updates["slides"] = {}
     for i in range(len(todo)):
@@ -314,6 +331,7 @@ def _make_latex_job(src_path, dst_path):
         job["reason"] = reason
         job["src_path"] = src_path
         job["dst_path"] = dst_path
+        job["fontcolor"] = "white"
         return job
     else:
         return None
@@ -327,6 +345,7 @@ def run_latex_render_job(job):
         latex.render_snippet_to_svg(
             latex_string=latex_string,
             out_path=job["dst_path"],
+            fontcolor=job["fontcolor"],
         )
 
     elif job["latex_type"] == "slide":

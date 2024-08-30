@@ -52,28 +52,44 @@ def glob(path, pattern):
 
 def copytree_lazy(src, dst, verbose=False):
     updates = False
+    if os.path.isdir(src):
+        os.makedirs(dst, exist_ok=True)
+        for src_path in glob(src, "*"):
+            src_relpath = os.path.relpath(src_path, src)
+            dst_path = os.path.join(dst, src_relpath)
 
-    for src_path in glob(src, "*"):
-        src_relpath = os.path.relpath(src_path, src)
-        dst_path = os.path.join(dst, src_relpath)
+            if os.path.isdir(src_path):
+                _update = copytree_lazy(
+                    src=src_path, dst=dst_path, verbose=verbose
+                )
+            else:
+                _update = copy_lazy(
+                    src=src_path, dst=dst_path, verbose=verbose
+                )
 
-        need_to_copy = False
-        if not os.path.exists(dst_path):
+            if _update:
+                updates = True
+        return updates
+    else:
+        return copy_lazy(src=src, dst=dst, verbose=verbose)
+
+
+def copy_lazy(src, dst, verbose=False):
+    need_to_copy = False
+    if not os.path.exists(dst):
+        need_to_copy = True
+    else:
+        src_mtime = mtime(src)
+        dst_mtime = mtime(dst)
+        if dst_mtime < src_mtime:
             need_to_copy = True
-        else:
-            src_mtime = mtime(src_path)
-            dst_mtime = mtime(dst_path)
-            if dst_mtime < src_mtime:
-                need_to_copy = True
 
-        if need_to_copy:
-            updates = True
-            os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-            if verbose:
-                print(f"copy {src_path:s} to {dst_path:s}")
-            shutil.copy(src_path, dst_path)
+    if need_to_copy:
+        if verbose:
+            print(f"copy {src:s} to {dst:s}")
+        shutil.copy(src, dst)
 
-    return updates
+    return need_to_copy
 
 
 def read_lines_from_textfile(path):
@@ -81,6 +97,23 @@ def read_lines_from_textfile(path):
         lines = f.readlines()
     lines = [str.strip(line) for line in lines]
     return lines
+
+
+def laods_layers_txt(s):
+    layers = {}
+    current_layer = None
+    for line in str.splitlines(s):
+        if len(line) > 0:
+            first_char = line[0]
+            if str.isspace(first_char):
+                assert (
+                    current_layer is not None
+                ), "Expected layer before speech."
+                layers[current_layer].append(str.strip(line))
+            else:
+                current_layer = line
+                layers[current_layer] = []
+    return layers
 
 
 def mtime(path):
