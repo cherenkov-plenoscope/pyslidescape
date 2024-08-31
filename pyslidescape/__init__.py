@@ -312,6 +312,14 @@ def _render_notes(work_dir, todo=None, pool=None, verbose=True):
                 if verbose:
                     print(f"render notes {slide_key:s}/{layers_key:s}")
                 need_to_render_note = True
+            else:
+                slide_path = os.path.join(slide_dir, layers_key + ".jpg")
+                slide_mtime = utils.mtime(slide_path)
+                slide_with_notes_mtime = utils.mtime(slide_with_notes_path)
+                if slide_mtime > slide_with_notes_mtime:
+                    if verbose:
+                        print(f"update notes because slide got updated {slide_key:s}/{layers_key:s}")
+                    need_to_render_note = True
 
             if need_to_render_note:
                 jobs.append(
