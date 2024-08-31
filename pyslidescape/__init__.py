@@ -225,15 +225,21 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
             p_slide_woext, _ = os.path.splitext(p_slide)
             p_slide_with_notes = p_slide_woext + ".sn.jpg"
             list_of_slides_with_notes_paths.append(p_slide_with_notes)
-
-            portable_document_format.images_to_pdf(
-                list_of_image_paths=list_of_slides_with_notes_paths,
-                out_path=notes_pdf_path,
-            )
+        portable_document_format.images_to_pdf(
+            list_of_image_paths=list_of_slides_with_notes_paths,
+            out_path=notes_pdf_path,
+        )
 
     if out_path is not None:
         shutil.copy(src=pdf_path, dst=out_path + ".part")
         os.rename(out_path + ".part", out_path)
+
+        if notes:
+            notes_pdf_path = os.path.join(build_dir, "slides.notes.pdf")
+            out_path_wo_ext, ext = os.path.splitext(out_path)
+            notes_out_path = out_path_wo_ext + ".notes" + ext
+            shutil.copy(src=notes_pdf_path, dst=notes_out_path + ".part")
+            os.rename(notes_out_path + ".part", notes_out_path)
 
     return True
 
@@ -299,7 +305,9 @@ def _render_notes(work_dir, todo=None, pool=None, verbose=True):
                 utils.write_lines_to_textfile(path=mem_path, lines=cur_notes)
                 need_to_render_note = True
 
-            slide_with_notes_path = mem_path + ".sn.jpg"
+            slide_with_notes_path = os.path.join(
+                slide_dir, layers_key + ".sn.jpg"
+            )
             if not os.path.exists(slide_with_notes_path):
                 if verbose:
                     print(f"render notes {slide_key:s}/{layers_key:s}")
