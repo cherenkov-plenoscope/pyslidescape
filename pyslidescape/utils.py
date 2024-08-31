@@ -4,6 +4,7 @@ import pathlib
 import multiprocessing
 import shutil
 import json
+from . import layers_txt
 
 
 class SerialPool:
@@ -34,6 +35,13 @@ def init_multiprocessing_pool_if_None(pool):
         return multiprocessing_pool(count)
     else:
         return pool
+
+
+def init_todo_if_None(todo, work_dir):
+    if todo is None:
+        return init_todo(work_dir=work_dir)
+    else:
+        return todo
 
 
 def get_resources_dir():
@@ -99,6 +107,15 @@ def read_lines_from_textfile(path):
     return lines
 
 
+def write_lines_to_textfile(path, lines):
+    tmp_path = path + ".part"
+    with open(tmp_path, "wt") as f:
+        for line in lines:
+            f.write(line)
+            f.write("\n")
+    os.rename(tmp_path, path)
+
+
 def laods_layers_txt(s):
     layers = {}
     current_layer = None
@@ -130,3 +147,28 @@ def write_dict_to_json(path, d):
 def read_json_to_dict(path):
     with open(path, "rt") as f:
         return json.loads(f.read())
+
+
+def init_todo(work_dir):
+    """
+    status_of_what_needs_to_be_done
+    """
+    slides_txt_path = os.path.join(work_dir, "slides.txt")
+    slides = read_lines_from_textfile(path=slides_txt_path)
+    sts = []
+    for slide in slides:
+        slide_dir = os.path.join(work_dir, "slides", slide)
+        sls = {}
+        sls["slide"] = slide
+        with open(os.path.join(slide_dir, "layers.txt"), "rt") as f:
+            layers = layers_txt.loads(f.read())
+
+        show_layer_sets = [
+            layers_txt.split_show_layers_set(layer) for layer in layers
+        ]
+        sls["show_layer_sets"] = show_layer_sets
+        sls["notes"] = {}
+        for layer in layers:
+            sls["notes"][layer] = layers[layer]
+        sts.append(sls)
+    return sts

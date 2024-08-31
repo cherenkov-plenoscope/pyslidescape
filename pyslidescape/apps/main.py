@@ -49,6 +49,9 @@ def main():
     compile_cmd.add_argument(
         "--verbose", action="store_true", help="Print what is done."
     )
+    compile_cmd.add_argument(
+        "--notes", action="store_true", help="Export with notes."
+    )
 
     # slide
     # =====
@@ -147,6 +150,7 @@ def main():
                 args.num_threads
             ),
             verbose=args.verbose,
+            notes=args.notes,
         )
     elif args.command == "add-slide":
         pyslidescape.add_slide(

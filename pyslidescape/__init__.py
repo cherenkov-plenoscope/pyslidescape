@@ -5,7 +5,7 @@ from . import portable_document_format
 from . import template
 from . import latex
 from . import layers_txt
-from . import notes
+from . import notes_img
 
 import os
 import shutil
@@ -35,29 +35,7 @@ def add_slide(work_dir, slide_name, slide_format=None):
         template.init_slide_dir(path=slide_dir, slide_format=slide_format)
 
 
-def status_of_what_needs_to_be_done(work_dir):
-    slides_txt_path = os.path.join(work_dir, "slides.txt")
-    slides = utils.read_lines_from_textfile(path=slides_txt_path)
-    sts = []
-    for slide in slides:
-        slide_dir = os.path.join(work_dir, "slides", slide)
-        sls = {}
-        sls["slide"] = slide
-        with open(os.path.join(slide_dir, "layers.txt"), "rt") as f:
-            layers = layers_txt.loads(f.read())
-
-        show_layer_sets = [
-            layers_txt.split_show_layers_set(layer) for layer in layers
-        ]
-        sls["show_layer_sets"] = show_layer_sets
-        sls["speech"] = {}
-        for layer in layers:
-            sls["speech"][layer] = layers[layer]
-        sts.append(sls)
-    return sts
-
-
-def compile(work_dir, out_path=None, pool=None, verbose=True, speech=False):
+def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
     """
     pdf
         resources
@@ -70,12 +48,12 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, speech=False):
     """
     if out_path is None:
         out_path = os.path.join(work_dir, "slides.pdf")
+
     pool = utils.init_multiprocessing_pool_if_None(pool=pool)
+    todo = utils.init_todo(work_dir=work_dir)
 
     build_dir = os.path.join(work_dir, ".build")
     os.makedirs(build_dir, exist_ok=True)
-
-    todo = status_of_what_needs_to_be_done(work_dir=work_dir)
 
     # latex snippets and slides
     # -------------------------
@@ -235,6 +213,24 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, speech=False):
             list_of_image_paths=list_of_image_paths, out_path=pdf_path
         )
 
+    # notes
+    # -----
+    if notes:
+        _render_notes(work_dir=work_dir, todo=todo, pool=pool, verbose=verbose)
+
+        need_to_render_notes_pdf = False
+        notes_pdf_path = os.path.join(build_dir, "slides.notes.pdf")
+        list_of_slides_with_notes_paths = []
+        for p_slide in list_of_image_paths:
+            p_slide_woext, _ = os.path.splitext(p_slide)
+            p_slide_with_notes = p_slide_woext + ".sn.jpg"
+            list_of_slides_with_notes_paths.append(p_slide_with_notes)
+
+            portable_document_format.images_to_pdf(
+                list_of_image_paths=list_of_slides_with_notes_paths,
+                out_path=notes_pdf_path,
+            )
+
     if out_path is not None:
         shutil.copy(src=pdf_path, dst=out_path + ".part")
         os.rename(out_path + ".part", out_path)
@@ -270,13 +266,62 @@ def run_png_render_job(job):
     )
 
 
+def _render_notes(work_dir, todo=None, pool=None, verbose=True):
+    pool = utils.init_multiprocessing_pool_if_None(pool=pool)
+    todo = utils.init_todo_if_None(todo=todo, work_dir=work_dir)
+
+    build_dir = os.path.join(work_dir, ".build")
+
+    jobs = []
+    for i in range(len(todo)):
+        slide = todo[i]
+        slide_key = slide["slide"]
+        slide_dir = os.path.join(build_dir, "slides", slide_key)
+        for layers_key in slide["notes"]:
+            mem_basename = layers_key + ".notes"
+            mem_path = os.path.join(slide_dir, mem_basename)
+            cur_notes = slide["notes"][layers_key]
+
+            need_to_render_note = False
+
+            if os.path.exists(mem_path):
+                mem_notes = utils.read_lines_from_textfile(mem_path)
+                if mem_notes != cur_notes:
+                    if verbose:
+                        print(f"update notes {slide_key:s}/{layers_key:s}")
+                    utils.write_lines_to_textfile(
+                        path=mem_path, lines=cur_notes
+                    )
+                    need_to_render_note = True
+            else:
+                if verbose:
+                    print(f"init notes {slide_key:s}/{layers_key:s}")
+                utils.write_lines_to_textfile(path=mem_path, lines=cur_notes)
+                need_to_render_note = True
+
+            slide_with_notes_path = mem_path + ".sn.jpg"
+            if not os.path.exists(slide_with_notes_path):
+                if verbose:
+                    print(f"render notes {slide_key:s}/{layers_key:s}")
+                need_to_render_note = True
+
+            if need_to_render_note:
+                jobs.append(
+                    {
+                        "work_dir": work_dir,
+                        "slide_key": slide_key,
+                        "layers_key": layers_key,
+                    }
+                )
+
+    pool.map(_run_job_render_note, jobs)
+
+
 def update_latex_slides_and_snippets(
     work_dir, todo=None, pool=None, verbose=True
 ):
     pool = utils.init_multiprocessing_pool_if_None(pool=pool)
-
-    if todo is None:
-        todo = status_of_what_needs_to_be_done(work_dir=work_dir)
+    todo = utils.init_todo_if_None(todo=todo, work_dir=work_dir)
 
     latex_types = {
         "slide": ".png",
@@ -364,3 +409,26 @@ def run_latex_render_job(job):
         )
     else:
         raise AssertionError(f"No such latex_type {job['latex_type']:s}.")
+
+
+def _run_job_render_note(job):
+    build_dir = os.path.join(job["work_dir"], ".build")
+    slide_dir = os.path.join(build_dir, "slides", job["slide_key"])
+    notes_path = os.path.join(slide_dir, job["layers_key"] + ".notes")
+    notes_render_path = notes_path + ".jpg"
+    notes_lines = utils.read_lines_from_textfile(notes_path)
+    notes_text = "\n".join(notes_lines)
+    notes_img.render_text_to_image(
+        path=notes_render_path,
+        text=notes_text,
+    )
+
+    slide_render_path = os.path.join(slide_dir, job["layers_key"] + ".jpg")
+    slide_with_notes_path = os.path.join(
+        slide_dir, job["layers_key"] + ".sn.jpg"
+    )
+
+    notes_img.stack_images(
+        out_path=slide_with_notes_path,
+        input_paths=[slide_render_path, notes_render_path],
+    )
