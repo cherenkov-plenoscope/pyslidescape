@@ -169,6 +169,7 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
 
             if slide_rendering_need_update[slide]:
                 need_to_render = True
+                reason = "resources updated"
 
             if not os.path.exists(dst_path):
                 reason = "does not exist yet"
