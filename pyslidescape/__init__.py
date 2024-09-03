@@ -319,7 +319,10 @@ def _render_notes(work_dir, todo=None, pool=None, verbose=True):
                 slide_with_notes_mtime = utils.mtime(slide_with_notes_path)
                 if slide_mtime > slide_with_notes_mtime:
                     if verbose:
-                        print(f"update notes because slide got updated {slide_key:s}/{layers_key:s}")
+                        print(
+                            "update notes because slide got updated "
+                            f"{slide_key:s}/{layers_key:s}"
+                        )
                     need_to_render_note = True
 
             if need_to_render_note:
@@ -358,7 +361,8 @@ def update_latex_slides_and_snippets(
                 jobs.append(_job)
                 if verbose:
                     print(
-                        f"latex render: {dst_path:s} because {_job['reason']:s}."
+                        f"latex render: {dst_path:s} "
+                        f"because {_job['reason']:s}."
                     )
 
         for i in range(len(todo)):
@@ -378,7 +382,8 @@ def update_latex_slides_and_snippets(
                     jobs.append(_job)
                     if verbose:
                         print(
-                            f"latex render: {dst_path:s} because {_job['reason']:s}."
+                            f"latex render: {dst_path:s} "
+                            f"because {_job['reason']:s}."
                         )
 
     pool.map(run_latex_render_job, jobs)
