@@ -118,10 +118,10 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
 
             if need_to_roll_out:
                 if slide not in slides_all_layers:
-                    slides_all_layers[
-                        slide
-                    ] = inkscape.find_inkscape_labels_for_layers_in_inkscape_svg(
-                        path=src_path
+                    slides_all_layers[slide] = (
+                        inkscape.find_inkscape_labels_for_layers_in_inkscape_svg(
+                            path=src_path
+                        )
                     )
 
                 job = {
@@ -376,7 +376,15 @@ def update_latex_slides_and_snippets(
                 _src_path, _ = os.path.splitext(src_path)
                 dst_path = _src_path + latex_types[lt]
 
-                _job = _make_latex_job(src_path=src_path, dst_path=dst_path)
+                fontcolor = "white"
+                if ".black." in os.path.basename(src_path):
+                    fontcolor = "black"
+                elif ".white." in os.path.basename(src_path):
+                    fontcolor = "white"
+
+                _job = _make_latex_job(
+                    src_path=src_path, dst_path=dst_path, fontcolor=fontcolor
+                )
                 if _job is not None:
                     _job["latex_type"] = lt
                     jobs.append(_job)
@@ -389,7 +397,7 @@ def update_latex_slides_and_snippets(
     pool.map(run_latex_render_job, jobs)
 
 
-def _make_latex_job(src_path, dst_path):
+def _make_latex_job(src_path, dst_path, fontcolor="white"):
     need_to_render = False
 
     if not os.path.exists(dst_path):
@@ -407,7 +415,7 @@ def _make_latex_job(src_path, dst_path):
         job["reason"] = reason
         job["src_path"] = src_path
         job["dst_path"] = dst_path
-        job["fontcolor"] = "white"
+        job["fontcolor"] = fontcolor
         return job
     else:
         return None
