@@ -100,11 +100,18 @@ def copy_lazy(src, dst, verbose=False):
     return need_to_copy
 
 
-def read_lines_from_textfile(path):
+def read_lines_from_textfile(path, comment_marker=None):
     with open(path, "rt") as f:
         lines = f.readlines()
-    lines = [str.strip(line) for line in lines]
-    return lines
+    out_lines = []
+    for line in lines:
+        sline = str.strip(line)
+        if comment_marker is None:
+            out_lines.append(sline)
+        else:
+            if not sline.startswith(comment_marker):
+                out_lines.append(sline)
+    return out_lines
 
 
 def write_lines_to_textfile(path, lines):
@@ -154,7 +161,7 @@ def init_todo(work_dir):
     status_of_what_needs_to_be_done
     """
     slides_txt_path = os.path.join(work_dir, "slides.txt")
-    slides = read_lines_from_textfile(path=slides_txt_path)
+    slides = read_lines_from_textfile(path=slides_txt_path, comment_marker="#")
     sts = []
     for slide in slides:
         slide_dir = os.path.join(work_dir, "slides", slide)
