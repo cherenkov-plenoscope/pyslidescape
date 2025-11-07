@@ -7,12 +7,15 @@ def dumps(layers, indent=4):
     return out
 
 
-def loads(s):
+def loads(s, comment_char="#"):
     layers = {}
     current_layer = None
     for line in str.splitlines(s):
         if len(line) > 0:
             first_char = line[0]
+            if first_char == "#":
+                # ignore comment line
+                pass
             if str.isspace(first_char):
                 assert (
                     current_layer is not None

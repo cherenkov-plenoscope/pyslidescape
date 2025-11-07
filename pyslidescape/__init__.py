@@ -214,6 +214,14 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
             list_of_image_paths=list_of_image_paths, out_path=pdf_path
         )
 
+        list_of_image_paths_file = os.path.join(
+            build_dir,
+            "list_of_image_paths.txt",
+        )
+        with open(list_of_image_paths_file, "wt") as fout:
+            for image_path in list_of_image_paths:
+                fout.write(f"{os.path.abspath(image_path):s}\n")
+
     # notes
     # -----
     if notes:
@@ -376,7 +384,7 @@ def update_latex_slides_and_snippets(
                 _src_path, _ = os.path.splitext(src_path)
                 dst_path = _src_path + latex_types[lt]
 
-                fontcolor = "white"
+                fontcolor = "black"
                 if ".black." in os.path.basename(src_path):
                     fontcolor = "black"
                 elif ".white." in os.path.basename(src_path):
