@@ -53,6 +53,28 @@ def main():
         "--notes", action="store_true", help="Export with notes."
     )
 
+    # time-slides
+    # ===========
+    time_slides_cmd = commands.add_parser(
+        "time-slides",
+        help=(
+            "Opens an interactive viewer of your slides and records the "
+            "time duration and order in which the slides are shown. "
+            "This can be used to render the slides into a video to match "
+            "your seperate voice recording."
+        ),
+    )
+    add_work_dir_argument_to_command(cmd=time_slides_cmd)
+    time_slides_cmd.add_argument(
+        "out_path",
+        metavar="OUT_PATH",
+        type=str,
+        help=(
+            "Path to the output text file containing the slide paths and "
+            "durations for 'ffmpeg'"
+        ),
+    )
+
     # slide
     # =====
     slide_cmd = commands.add_parser(
@@ -178,6 +200,21 @@ def main():
             scale=args.scale,
             width_of_the_document_in_inches=args.width,
             fontcolor=fontcolor,
+        )
+    elif args.command == "time-slides":
+        import pyslidescape.timing
+
+        input_path_to_list_of_image_paths = os.path.join(
+            args.work_dir, ".build", "list_of_image_paths.txt"
+        )
+        assert os.path.exists(input_path_to_list_of_image_paths), (
+            f"Can't find '{input_path_to_list_of_image_paths:s}'. "
+            "Maybe this is not a slidescape working directory? "
+            "Also: You have to compile before timing."
+        )
+        pyslidescape.timing.run_interactive_viewer_for_timing(
+            input_path_to_list_of_image_paths=input_path_to_list_of_image_paths,
+            output_path_to_ffmpeg_slide_order=args.out_path,
         )
     else:
         print("No or unknown command.")
