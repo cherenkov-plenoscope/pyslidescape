@@ -13,13 +13,13 @@ How to render a video from slides and a voice recording
 
 After compiling your talk, record a voice over ``<path to voice audio.wav>`` with any tool you like and call:
 
-.. code-block::bash
+.. code-block:: bash
 
     slidescape time-slides <output path to text file containing slide paths and durations.txt>
 
 This will open an interactive slide viewer which records the slides order and duration in order to syncronize the slides with your voice over.
 
-.. code-block::bash
+.. code-block:: bash
 
     ffmpeg \
     -f concat \
