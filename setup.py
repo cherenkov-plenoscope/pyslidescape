@@ -22,7 +22,12 @@ setuptools.setup(
     author_email="AUTHOR@mail",
     packages=["pyslidescape", "pyslidescape.apps"],
     package_data={"pyslidescape": [os.path.join("resources", "*")]},
-    install_requires=["img2pdf>=0.5.1", "svgutils>=0.3.4", "pygame>=2.6.1", "pillow>=11.1.0"],
+    install_requires=[
+        "img2pdf>=0.5.1",
+        "svgutils>=0.3.4",
+        "pygame>=2.6.1",
+        "pillow>=11.1.0",
+    ],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
