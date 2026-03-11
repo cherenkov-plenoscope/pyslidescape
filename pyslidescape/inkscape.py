@@ -68,7 +68,7 @@ def inkscape_render(svg_path, out_path, background_opacity=0.0):
         assert os.path.exists(tmp_image_png), (
             "Expected inkscape to render svg to png. But it failed. "
             f"Image {tmp_image_png:s} does not exist. "
-            f"Call was: {inkscape_call}"
+            "Maybe this is inkscape issue #4716."
         )
 
         ext = os.path.splitext(out_path)
