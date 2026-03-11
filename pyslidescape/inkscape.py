@@ -58,15 +58,19 @@ def find_inkscape_labels_for_layers_in_inkscape_svg(path):
 def inkscape_render(svg_path, out_path, background_opacity=0.0):
     with tempfile.TemporaryDirectory() as tmp:
         tmp_image_png = os.path.join(tmp, "image.png")
-        rc_ink = subprocess.call(
-            [
-                "inkscape",
-                "--export-background-opacity={:f}".format(background_opacity),
-                "--export-type={:s}".format("png"),
-                "--export-filename={:s}".format(tmp_image_png),
-                svg_path,
-            ]
+
+        _inkscape_render_fix_issue_4716(
+            svg_path=svg_path,
+            png_path=tmp_image_png,
+            background_opacity=background_opacity,
         )
+
+        assert os.path.exists(tmp_image_png), (
+            "Expected inkscape to render svg to png. But it failed. "
+            f"Image {tmp_image_png:s} does not exist. "
+            f"Call was: {inkscape_call}"
+        )
+
         ext = os.path.splitext(out_path)
         if ext == ".png":
             os.rename(tmp_image_png, out_path)
@@ -84,3 +88,27 @@ def inkscape_render(svg_path, out_path, background_opacity=0.0):
                     out_path,
                 ]
             )
+        assert os.path.exists(out_path)
+
+
+def _inkscape_render_fix_issue_4716(
+    svg_path, png_path, background_opacity=0.0
+):
+    """
+    workaround bug https://gitlab.com/inkscape/inkscape/-/work_items/4716
+    """
+    inkscape_call = [
+        "inkscape",
+        "--export-background-opacity={:f}".format(background_opacity),
+        "--export-type={:s}".format("png"),
+        "--export-filename={:s}".format(png_path),
+        svg_path,
+    ]
+    max_num_trails = 5
+    num_trail = 0
+
+    while not os.path.exists(png_path) and num_trail < max_num_trails:
+        num_trail += 1
+        rc_ink = subprocess.call(inkscape_call)
+
+    return rc_ink
