@@ -1,11 +1,25 @@
-import pyslidescape
-import argparse
-import os
-import sys
-import multiprocessing
+#!/usr/bin/env python3
 
 
-def main():
+def command_line_interface():
+    import argparse
+    import os
+    import sys
+    import multiprocessing
+    import pyslidescape
+
+    def add_work_dir_argument_to_command(cmd):
+        cmd.add_argument(
+            "work_dir",
+            nargs="?",
+            default=os.curdir,
+            metavar="WORK_DIR",
+            type=str,
+            help=(
+                "The working directory to contain the raw presentation slides."
+            ),
+        )
+
     parser = argparse.ArgumentParser(
         prog="pyslidescape",
         description="Make presentation slides from images and vector drawings.",
@@ -51,6 +65,18 @@ def main():
     )
     compile_cmd.add_argument(
         "--notes", action="store_true", help="Export with notes."
+    )
+
+    # clean
+    # =====
+    clean_cmd = commands.add_parser(
+        "clean", help="Removes all compilation results and build artifacts."
+    )
+    add_work_dir_argument_to_command(cmd=clean_cmd)
+    clean_cmd.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Only print files to be removed.",
     )
 
     # time-slides
@@ -160,7 +186,7 @@ def main():
 
     if args.version:
         print(pyslidescape.__version__)
-        return 0
+        sys.exit(os.EX_OK)
 
     if args.command == "init":
         pyslidescape.template.init_example_presentation(work_dir=args.work_dir)
@@ -173,6 +199,11 @@ def main():
             ),
             verbose=args.verbose,
             notes=args.notes,
+        )
+    elif args.command == "clean":
+        pyslidescape.clean(
+            work_dir=args.work_dir,
+            dry_run=args.dry_run,
         )
     elif args.command == "add-slide":
         pyslidescape.add_slide(
@@ -220,18 +251,3 @@ def main():
         print("No or unknown command.")
         parser.print_help()
         sys.exit(17)
-
-
-def add_work_dir_argument_to_command(cmd):
-    cmd.add_argument(
-        "work_dir",
-        nargs="?",
-        default=os.curdir,
-        metavar="WORK_DIR",
-        type=str,
-        help=("The working directory to contain the raw presentation slides."),
-    )
-
-
-if __name__ == "__main__":
-    main()

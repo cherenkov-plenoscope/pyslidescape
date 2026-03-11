@@ -253,6 +253,25 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
     return True
 
 
+def clean(work_dir, dry_run=False):
+    paths = [
+        "slides.pdf",
+        "slides.notes.pdf",
+        ".build",
+    ]
+    for local_path in paths:
+        path = os.path.join(work_dir, local_path)
+        if dry_run:
+            print(path)
+        if os.path.exists(path):
+            if os.path.isfile(path):
+                os.remove(path)
+            elif os.path.isdir(path):
+                shutil.rmtree(path)
+            else:
+                warnings.warn(f"Can not remove '{path:s}'.")
+
+
 def run_svg_roll_out_job(job):
     roll_out_slide_layers(**job)
 

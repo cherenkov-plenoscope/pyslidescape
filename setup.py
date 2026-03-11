@@ -36,7 +36,7 @@ setuptools.setup(
     ],
     entry_points={
         "console_scripts": [
-            "slidescape=pyslidescape.apps.main:main",
+            "slidescape=pyslidescape.apps.main:command_line_interface",
         ]
     },
 )
