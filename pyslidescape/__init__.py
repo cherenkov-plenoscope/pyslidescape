@@ -199,6 +199,11 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
     need_to_render_pdf = False
     pdf_path = os.path.join(build_dir, "slides.pdf")
 
+    list_of_image_paths_file = os.path.join(
+        build_dir,
+        "list_of_image_paths.txt",
+    )
+
     if not os.path.exists(pdf_path):
         reason = "does not exist yet"
         need_to_render_pdf = True
@@ -207,6 +212,19 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
             reason = "needs update"
             need_to_render_pdf = True
 
+        if os.path.exists(list_of_image_paths_file):
+            previous_list_of_image_paths = utils.read_lines_from_textfile(
+                path=list_of_image_paths_file,
+            )
+
+            slide_order_has_changed = (
+                previous_list_of_image_paths != list_of_image_paths
+            )
+
+            if slide_order_has_changed:
+                reason = "slide order has changed"
+                need_to_render_pdf = True
+
     if need_to_render_pdf:
         if verbose:
             print(f"compile pdf because {reason:s}.")
@@ -214,13 +232,10 @@ def compile(work_dir, out_path=None, pool=None, verbose=True, notes=False):
             list_of_image_paths=list_of_image_paths, out_path=pdf_path
         )
 
-        list_of_image_paths_file = os.path.join(
-            build_dir,
-            "list_of_image_paths.txt",
+        utils.write_lines_to_textfile(
+            path=list_of_image_paths_file,
+            lines=list_of_image_paths,
         )
-        with open(list_of_image_paths_file, "wt") as fout:
-            for image_path in list_of_image_paths:
-                fout.write(f"{os.path.abspath(image_path):s}\n")
 
     # notes
     # -----
